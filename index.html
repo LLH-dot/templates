@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>数学测评系统</title>
+    <!-- 使用 CDN 引入 Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>欢迎来到数学测评系统</h1>
+    <p>请回答下面的问题：</p>
+
+    <!-- 题目1 -->
+    <p>1. 1 + 1 = <input type="text" id="q1" /></p>
+
+    <!-- 题目2 -->
+    <p>2. 3 × 2 = <input type="text" id="q2" /></p>
+
+    <!-- 题目3 -->
+    <p>3. 5 - 3 = <input type="text" id="q3" /></p>
+
+    <!-- 题目4 -->
+    <p>4. 10 ÷ 2 = <input type="text" id="q4" /></p>
+
+    <!-- 题目5 -->
+    <p>5. 4 + 5 = <input type="text" id="q5" /></p>
+
+    <!-- 提交按钮 -->
+    <button onclick="submitAnswers()">提交答案</button>
+
+    <!-- 显示结果 -->
+    <p id="result"></p>
+
+    <!-- 图表容器 -->
+    <canvas id="myChart" width="400" height="200"></canvas>
+
+    <script>
+        function submitAnswers() {
+            const answers = {
+                q1: document.getElementById("q1").value,
+                q2: document.getElementById("q2").value,
+                q3: document.getElementById("q3").value,
+                q4: document.getElementById("q4").value,
+                q5: document.getElementById("q5").value
+            };
+
+            fetch("/submit", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(answers)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('网络响应失败');
+                }
+                return response.json();
+            })
+            .then(data => {
+                let resultText = "答题结果：<br>";
+
+                for (let key in data.result) {
+                    let item = data.result[key];
+                    if (item.correct) {
+                        resultText += `${key.toUpperCase()}：答对了 ✅<br>`;
+                    } else {
+                        resultText += `${key.toUpperCase()}：答错了 ❌（你答：${item.student}，正确：${item.correct_answer}）<br>`;
+                    }
+                }
+
+                resultText += `<br>你答对了 ${data.correct_count} 道题，共 ${data.total} 道题，正确率是 ${data.accuracy}%。`;
+                document.getElementById("result").innerHTML = resultText;
+
+                // 清空输入框
+                document.getElementById("q1").value = "";
+                document.getElementById("q2").value = "";
+                document.getElementById("q3").value = "";
+                document.getElementById("q4").value = "";
+                document.getElementById("q5").value = "";
+
+                // 显示图表
+                updateChart(data.result);
+            })
+            .catch(error => {
+                console.error('错误:', error);
+                alert('提交答案时发生错误，请重试。');
+            });
+        }
+
+        // 图表初始化
+        let chartInstance = null;
+
+        function updateChart(result) {
+            const labels = Object.keys(result);
+            const data = labels.map(key => result[key].correct ? 1 : 0);
+
+            if (chartInstance) {
+                chartInstance.destroy(); // 销毁旧图表
+            }
+
+            const ctx = document.getElementById('myChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels.map(key => key.toUpperCase()),
+                    datasets: [{
+                        label: '答题结果（1=正确，0=错误）',
+                        data: data,
+                        backgroundColor: data.map(value => value === 1 ? 'green' : 'red')
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
