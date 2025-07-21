@@ -1,66 +1,148 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-    <meta charset="UTF-8">
-    <title>数学测评系统</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>数学测评系统</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    .question {
+      margin-bottom: 15px;
+    }
+    input[type="text"] {
+      width: 50px;
+      padding: 5px;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    #result {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #ecf0f1;
+      border-radius: 8px;
+    }
+    .correct {
+      color: green;
+    }
+    .incorrect {
+      color: red;
+    }
+  </style>
 </head>
 <body>
-    <h1>欢迎来到数学测评系统</h1>
-    <p>请回答下面的问题：</p>
+  <h1>欢迎来到数学测评系统</h1>
+  <p>请回答下面的问题：</p>
 
-    <!-- 题目1 -->
-    <p>1. 1 + 1 = <input type="text" id="q1" /></p>
-
-    <!-- 题目2 -->
-    <p>2. 3 × 2 = <input type="text" id="q2" /></p>
-
-    <!-- 题目3 -->
-    <p>3. 5 - 3 = <input type="text" id="q3" /></p>
-
-    <!-- 题目4 -->
-    <p>4. 10 ÷ 2 = <input type="text" id="q4" /></p>
-
-    <!-- 题目5 -->
-    <p>5. 4 + 5 = <input type="text" id="q5" /></p>
-
-    <!-- 提交按钮 -->
+  <!-- 题目列表 -->
+  <div id="quiz">
+    <div class="question">
+      1. 1 + 1 = <input type="text" id="q1" />
+      <span class="feedback" id="f1"></span>
+    </div>
+    <div class="question">
+      2. 3 × 2 = <input type="text" id="q2" />
+      <span class="feedback" id="f2"></span>
+    </div>
+    <div class="question">
+      3. 5 - 3 = <input type="text" id="q3" />
+      <span class="feedback" id="f3"></span>
+    </div>
+    <div class="question">
+      4. 10 ÷ 2 = <input type="text" id="q4" />
+      <span class="feedback" id="f4"></span>
+    </div>
+    <div class="question">
+      5. 4 + 5 = <input type="text" id="q5" />
+      <span class="feedback" id="f5"></span>
+    </div>
     <button onclick="submitAnswers()">提交答案</button>
+  </div>
 
-    <!-- 显示结果 -->
-    <p id="result"></p>
+  <!-- 显示结果 -->
+  <div id="result" style="display: none;">
+    <h2>答题结果</h2>
+    <p id="score"></p>
+    <ul id="details"></ul>
+  </div>
 
-    <script>
-        function submitAnswers() {
-            // 正确答案
-            const answers = {
-                q1: 2,
-                q2: 6,
-                q3: 2,
-                q4: 5,
-                q5: 9
-            };
+  <script>
+    function submitAnswers() {
+      // 正确答案
+      const answers = {
+        q1: 2,
+        q2: 6,
+        q3: 2,
+        q4: 5,
+        q5: 9
+      };
 
-            // 学生答题
-            let correctCount = 0;
+      let correctCount = 0;
+      const details = [];
 
-            // 遍历每道题
-            for (let key in answers) {
-                let studentAnswer = document.getElementById(key).value;
-                if (parseInt(studentAnswer) === answers[key]) {
-                    correctCount++;
-                }
-            }
+      // 清空上次结果
+      document.getElementById("details").innerHTML = "";
+      document.getElementById("result").style.display = "block";
 
-            // 计算正确率
-            let total = Object.keys(answers).length;
-            let accuracy = ((correctCount / total) * 100).toFixed(2);
+      // 遍历每道题
+      for (let key in answers) {
+        const studentAnswer = document.getElementById(key).value.trim();
+        const correctAnswer = answers[key];
+        const feedbackElement = document.getElementById("f" + key.slice(1));
 
-            // 显示结果
-            document.getElementById("result").innerText = 
-                "你答对了 " + correctCount + " 道题，共 " + total + " 道题，正确率是 " + accuracy + "%。";
+        if (studentAnswer === "") {
+          feedbackElement.textContent = "未作答";
+          feedbackElement.className = "incorrect";
+          details.push(`第 ${key.slice(1)} 题：未作答`);
+          continue;
         }
-    </script>
-</body>
-</html>
+
+        const parsedAnswer = parseInt(studentAnswer);
+        if (parsedAnswer === correctAnswer) {
+          feedbackElement.textContent = "✅ 正确";
+          feedbackElement.className = "correct";
+          correctCount++;
+          details.push(`第 ${key.slice(1)} 题：正确`);
+        } else {
+          feedbackElement.textContent = `❌ 错误（正确答案：${correctAnswer}）`;
+          feedbackElement.className = "incorrect";
+          details.push(`第 ${key.slice(1)} 题：错误，正确答案是 ${correctAnswer}`);
+        }
+      }
+
+      // 计算正确率
+      const total = Object.keys(answers).length;
+      const accuracy = ((correctCount / total) * 100).toFixed(2);
+
+      // 显示结果
+      document.getElementById("score").textContent =
+        `你答对了 ${correctCount} 道题，共 ${total} 道题，正确率是 ${accuracy}%。`;
+
+      // 显示每题详情
+      const detailsList = document.getElementById("details");
+      details.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        detailsList.appendChild(li);
+      });
+    }
+  </script>
 </body>
 </html>
